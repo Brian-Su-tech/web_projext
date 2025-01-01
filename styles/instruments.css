@@ -1,0 +1,9 @@
+/* 樂器購買頁面特定樣式 */
+.instrument-section {
+    padding: 40px 0;
+}
+
+.instrument-title {
+    color: var(--wood-primary);
+    margin-bottom: 30px;
+}
