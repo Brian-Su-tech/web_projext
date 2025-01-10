@@ -1,9 +1,0 @@
-/* 登入頁面特定樣式 */
-.login-section {
-    padding: 40px 0;
-}
-
-.login-title {
-    color: var(--wood-primary);
-    margin-bottom: 30px;
-}

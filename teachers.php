@@ -1,3 +1,8 @@
+<?php
+session_start();
+$user_logged_in = isset($_SESSION['user_id']);
+?>
+
 <!DOCTYPE html>
 <html lang="zh-TW">
 
@@ -19,26 +24,30 @@
     <!-- 導覽列 -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="index.html">和樂音樂教室</a>
+            <a class="navbar-brand" href="index.php">和樂音樂教室</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="index.html">首頁</a>
+                        <a class="nav-link" href="index.php">首頁</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" href="teachers.html">師資介紹</a>
+                        <a class="nav-link active" href="teachers.php">師資介紹</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="instruments.html">樂器購買</a>
+                        <a class="nav-link" href="instruments.php">樂器購買</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="booking.html">預約課程</a>
+                        <a class="nav-link" href="booking.php">預約課程</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="login.html">登入</a>
+                        <?php if ($user_logged_in): ?>
+                                <a class="nav-link" href="logout.php">登出</a>
+                        <?php else: ?>
+                                <a class="nav-link" href="login.php">登入</a>
+                        <?php endif; ?>
                     </li>
                 </ul>
             </div>

@@ -1,6 +1,10 @@
+<?php
+session_start();
+$user_logged_in = isset($_SESSION['user_id']);
+?>
+
 <!DOCTYPE html>
 <html lang="zh-TW">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,26 +21,30 @@
     <!-- 導覽列 -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="index.html">和樂音樂教室</a>
+            <a class="navbar-brand" href="index.php">和樂音樂教室</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link active" href="index.html">首頁</a>
+                        <a class="nav-link active" href="index.php">首頁</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="teachers.html">師資介紹</a>
+                        <a class="nav-link" href="teachers.php">師資介紹</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="instruments.html">樂器購買</a>
+                        <a class="nav-link" href="instruments.php">樂器購買</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="booking.html">預約課程</a>
+                        <a class="nav-link" href="booking.php">預約課程</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="login.html">登入</a>
+                        <?php if ($user_logged_in): ?>
+                                <a class="nav-link" href="logout.php">登出</a>
+                        <?php else: ?>
+                                <a class="nav-link" href="login.php">登入</a>
+                        <?php endif; ?>
                     </li>
                 </ul>
             </div>
@@ -53,25 +61,25 @@
         </div>
         <div class="carousel-inner">
             <div class="carousel-item active">
-                <img src="./images/rooms/piano-room.jpg" class="d-block w-100" alt="鋼琴教室">
+                <img src="images/rooms/piano-room.jpg" class="d-block w-100" alt="鋼琴教室">
                 <div class="carousel-caption">
                     <h3>鋼琴教室</h3>
                 </div>
             </div>
             <div class="carousel-item">
-                <img src="./images/rooms/drum-room.jpg" class="d-block w-100" alt="打鼓教室">
+                <img src="images/rooms/drum-room.jpg" class="d-block w-100" alt="打鼓教室">
                 <div class="carousel-caption">
                     <h3>打鼓教室</h3>
                 </div>
             </div>
             <div class="carousel-item">
-                <img src="./images/rooms/vocal-room.jpg" class="d-block w-100" alt="歌唱教室">
+                <img src="images/rooms/vocal-room.jpg" class="d-block w-100" alt="歌唱教室">
                 <div class="carousel-caption">
                     <h3>歌唱教室</h3>
                 </div>
             </div>
             <div class="carousel-item">
-                <img src="./images/rooms/guitar-room.jpg" class="d-block w-100" alt="吉他教室">
+                <img src="images/rooms/guitar-room.jpg" class="d-block w-100" alt="吉他教室">
                 <div class="carousel-caption">
                     <h3>吉他教室</h3>
                 </div>
