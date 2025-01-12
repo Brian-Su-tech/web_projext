@@ -79,17 +79,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <!-- 導覽列 -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="index.html">和樂音樂教室</a>
+            <a class="navbar-brand" href="index.php">和樂音樂教室</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="index.html">首頁</a>
+                        <a class="nav-link" href="index.php">首頁</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="teachers.html">師資介紹</a>
+                        <a class="nav-link" href="teachers.php">師資介紹</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="instruments.php">樂器購買</a>
