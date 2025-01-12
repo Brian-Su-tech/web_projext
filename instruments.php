@@ -226,7 +226,6 @@ $user_logged_in = isset($_SESSION['user_id']);
         <span class="cart-count">0</span>
     </div>
 
-    
     <div class="modal-backdrop"></div>
     <div class="cart-modal">
         <h2>購物車</h2>
@@ -248,7 +247,7 @@ $user_logged_in = isset($_SESSION['user_id']);
 
     function addToCart(instrumentId) {
         $.ajax({
-            url: 'module/cart_api.php?action=add',
+            url: 'module/instruments_api.php?action=add',
             type: 'POST',
             data: { id: instrumentId },
             success: function(response) {
@@ -269,30 +268,29 @@ $user_logged_in = isset($_SESSION['user_id']);
     }
 
     function updateCartCount() {
-    $.ajax({
-        url: 'module/cart_api.php?action=get_count',
-        type: 'GET',
-        success: function(response) {
-            try {
-                const data = JSON.parse(response);
-                if (data.success) {
-                    // 更新購物車紅點數字
-                    $('.cart-count').text(data.count);
-                } else {
-                    console.error('獲取購物車數量失敗：' + data.message);
+        $.ajax({
+            url: 'module/instruments_api.php?action=get_count',
+            type: 'GET',
+            success: function(response) {
+                try {
+                    const data = JSON.parse(response);
+                    if (data.success) {
+                        // 更新購物車紅點數字
+                        $('.cart-count').text(data.count);
+                    } else {
+                        console.error('獲取購物車數量失敗：' + data.message);
+                    }
+                } catch (e) {
+                    console.error('JSON 解析失敗', response);
                 }
-            } catch (e) {
-                console.error('JSON 解析失敗', response);
             }
-        }
-    });
-}
-
+        });
+    }
 
     // 顯示購物車
     function showCart() {
         $.ajax({
-            url: 'module/cart_api.php?action=get',
+            url: 'module/instruments_api.php?action=get',
             type: 'GET',
             success: function(response) {
                 const data = JSON.parse(response);
@@ -327,7 +325,7 @@ $user_logged_in = isset($_SESSION['user_id']);
     // 更新商品數量
     function updateQuantity(id, quantity) {
         $.ajax({
-            url: 'module/cart_api.php?action=update',
+            url: 'module/instruments_api.php?action=update',
             type: 'POST',
             data: { id: id, quantity: quantity },
             success: function(response) {
@@ -345,7 +343,7 @@ $user_logged_in = isset($_SESSION['user_id']);
     // 移除商品
     function removeFromCart(id) {
         $.ajax({
-            url: 'module/cart_api.php?action=remove',
+            url: 'module/instruments_api.php?action=remove',
             type: 'POST',
             data: { id: id },
             success: function(response) {
@@ -368,7 +366,7 @@ $user_logged_in = isset($_SESSION['user_id']);
         <?php else: ?>
             // 呼叫結帳的AJAX邏輯
             $.ajax({
-                url: 'module/cart_api.php?action=checkout',
+                url: 'module/instruments_api.php?action=checkout',
                 type: 'POST',
                 success: function(response) {
                     const data = JSON.parse(response);
@@ -376,12 +374,38 @@ $user_logged_in = isset($_SESSION['user_id']);
                         alert('訂購成功！訂單編號：' + data.order_id);
                         updateCartCount();
                         hideCart();
+                        loadInstruments(); // 重新載入商品列表
                     } else {
                         alert('訂購失敗：' + data.message);
                     }
                 }
             });
         <?php endif; ?>
+    }
+
+    // 重新載入商品列表
+    function loadInstruments() {
+        $.ajax({
+            url: 'module/instruments_api.php?action=get_instruments',
+            type: 'GET',
+            success: function(response) {
+                const data = JSON.parse(response);
+                let html = '';
+                data.forEach(item => {
+                    html += `
+                        <div class="instrument-card" data-category="${item.category}">
+                            <img src="${item.image_url}" alt="${item.name}" class="instrument-img">
+                            <h3>${item.name}</h3>
+                            <p class="instrument-description">${item.description}</p>
+                            <p class="instrument-price">NT$ ${item.price}</p>
+                            <p class="instrument-stock">庫存: ${item.stock}</p>
+                            <button onclick="addToCart(${item.id})" class="add-to-cart">加入購物車</button>
+                        </div>
+                    `;
+                });
+                $('.instruments-grid').html(html); // Replace old product list with updated one
+            }
+        });
     }
 
     // 篩選功能

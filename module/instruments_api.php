@@ -115,7 +115,7 @@ try {
                 
                 // 檢查所有商品庫存並計算總金額
                 foreach ($_SESSION['cart'] as $id => $quantity) {
-                    $stmt = $conn->prepare("SELECT id, price, stock FROM instruments WHERE id = ? FOR UPDATE");
+                    $stmt = $conn->prepare("SELECT id, name, price, stock FROM instruments WHERE id = ? FOR UPDATE");
                     $stmt->bind_param("i", $id);
                     $stmt->execute();
                     $result = $stmt->get_result();
@@ -125,40 +125,25 @@ try {
                         throw new Exception("商品庫存不足");
                     }
                     
+                    // 計算金額
                     $total_amount += $instrument['price'] * $quantity;
                     $order_items[] = [
                         'instrument_id' => $id,
+                        'name' => $instrument['name'],
                         'quantity' => $quantity,
                         'price' => $instrument['price']
                     ];
                     
-                    // 更新庫存
-                    $stmt = $conn->prepare("UPDATE instruments SET stock = stock - ? WHERE id = ?");
-                    $stmt->bind_param("ii", $quantity, $id);
-                    $stmt->execute();
                 }
                 
-                // 檢查所有商品庫存並插入訂單
-                foreach ($_SESSION['cart'] as $id => $quantity) {
-                    $stmt = $conn->prepare("SELECT name, price, stock FROM instruments WHERE id = ? FOR UPDATE");
-                    $stmt->bind_param("i", $id);
-                    $stmt->execute();
-                    $result = $stmt->get_result();
-                    $instrument = $result->fetch_assoc();
-
-                    if ($quantity > $instrument['stock']) {
-                        throw new Exception("商品庫存不足");
-                    }
-                    
-                    $total_amount = $instrument['price'] * $quantity;
-
-                    // 插入訂單
+                // 插入訂單
+                foreach ($order_items as $item) {
                     $stmt = $conn->prepare("INSERT INTO orders (user_name, instrument_name, quantity, price, total_amount) VALUES (?, ?, ?, ?, ?)");
                     $stmt->bind_param("ssidd", 
                         $user_name, 
-                        $instrument['name'], 
+                        $item['name'], 
                         $quantity, 
-                        $instrument['price'], 
+                        $item['price'], 
                         $total_amount
                     );
                     $stmt->execute();
@@ -171,7 +156,7 @@ try {
                     $stmt->bind_param("ii", $quantity, $id);
                     $stmt->execute();
                 }
-                
+
                 $conn->commit();        
                 $_SESSION['cart'] = [];
                 echo json_encode(['success' => true, 'order_id' => $order_id]);
@@ -232,6 +217,17 @@ try {
             unset($_SESSION['cart'][$instrument_id]);
             
             echo json_encode(['success' => true]);
+            break;
+        case 'get_instruments':
+            $sql = "SELECT * FROM instruments WHERE stock > 0"; // Fetch only in-stock items
+            $result = $conn->query($sql);
+
+            $instruments = [];
+            while ($row = $result->fetch_assoc()) {
+                $instruments[] = $row;
+            }
+
+            echo json_encode($instruments);
             break;
 
         default:
