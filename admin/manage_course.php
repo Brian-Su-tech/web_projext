@@ -17,126 +17,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../styles/main.css">
-    <style>
-        /* 按鈕樣式 */
-        .btn {
-            padding: 8px 16px;
-            align-items: center;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background-color 0.3s;
-        }
-
-        .btn-primary {
-            background-color: #4CAF50;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: #45a049;
-        }
-
-        .btn-secondary {
-            background-color: #f44336;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background-color: #da190b;
-        }
-
-        /* 表格樣式 */
-        .table-responsive {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: white;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-        }
-
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-
-        th {
-            background-color: #f8f9fa;
-            font-weight: bold;
-        }
-
-        tr:hover {
-            background-color: #f5f5f5;
-        }
-
-        /* 操作按鈕樣式 */
-        .action-btn {
-            padding: 4px 8px;
-            margin: 0 4px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .edit-btn {
-            background-color: #2196F3;
-            color: white;
-        }
-
-        .delete-btn {
-            background-color: #f44336;
-            color: white;
-        }
-
-        /* 對話框樣式 */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-        }
-
-        .modal-content {
-            background-color: white;
-            margin: 10% auto;
-            padding: 20px;
-            width: 90%;
-            max-width: 500px;
-            border-radius: 4px;
-            position: relative;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-
-        .form-buttons {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 20px;
-        }
-    </style>
+    <link rel="stylesheet" href="../styles/manage_course.css">
 </head>
 <body>
     <!-- 導覽列 -->
@@ -158,10 +39,10 @@
                         <a class="nav-link" href="manage_instruments.php">樂器購買</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" href="dashboard.php">樂器訂單</a>
+                        <a class="nav-link active" href="manage_order.php">樂器訂單</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="manage_course.php">預約課程</a>
+                        <a class="nav-link" href="manage_course.php">課程管理</a>
                     </li>
                     <li class="nav-item">
                         <?php if ($user_logged_in): ?>
@@ -177,25 +58,20 @@
 
     <div class="container  my-5">
         <h2 class="text-center mb-4">課程管理系統</h2>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <button id="prevWeekBtn" class="btn btn-outline-secondary">
+                <i class="bi bi-chevron-left"></i> 上一週
+            </button>
+            <h3 id="currentMonth" class="mb-0"></h3>
+            <button id="nextWeekBtn" class="btn btn-outline-secondary">
+                下一週 <i class="bi bi-chevron-right"></i>
+            </button>
+        </div>
+
         <button id="addCourseBtn" class="btn btn-primary mb-2">新增課程</button>
-        <div class="table-responsive">
-            <table id="courseTable">
-                <thead>
-                    <tr>
-                        <th>課程名稱</th>
-                        <th>教室</th>
-                        <th>老師</th>
-                        <th>開始時間</th>
-                        <th>結束時間</th>
-                        <th>容納人數</th>
-                        <th>目前人數</th>
-                        <th>操作</th>
-                    </tr>
-                </thead>
-                <tbody id="courseList">
-                    <!-- 課程資料將由 JavaScript 動態插入 -->
-                </tbody>
-            </table>
+        <div class="calendar-grid">
+            <div class="row" id="weekDays"></div>
+            <div class="row" id="courseGrid"></div>
         </div>
 
         <!-- 新增/編輯課程的對話框 -->
@@ -228,6 +104,10 @@
                         <label for="capacity">容納人數</label>
                         <input type="number" id="capacity" required min="1">
                     </div>
+                    <div class="form-group" id="num_classes_div">
+                        <label for="num_classes">新增堂數</label>
+                        <input type = "number" id="num_classes" min = "1" max="20" step="1" value = "1" checked>
+                    </div>
                     <div class="form-buttons">
                         <button type="submit" class="btn btn-primary">儲存</button>
                         <button type="button" class="btn btn-secondary" id="cancelBtn">取消</button>
@@ -237,7 +117,36 @@
         </div>
     </div>
 
+    <div id="student-list"></div>
+
     <script>
+        // 關閉模態框的腳本
+        // const modal = document.getElementById('studentModal');
+        const closeBtn = document.querySelector('.close');
+
+        document.addEventListener('click', function(event) {
+            if (event.target.matches('.close')) {
+                document.getElementById('student-list').style.display = 'none';
+            }
+        });
+
+
+        function viewStudents(course_id) {
+                // 使用 AJAX 發送請求
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', '../module/view_students.php?course_id=' + course_id, true);
+                xhr.onload = function() {
+                    if (xhr.status === 200) {
+                        // 顯示學生資訊
+                        document.getElementById('student-list').innerHTML = xhr.responseText;
+                        document.getElementById('student-list').style.display = 'block'; // 顯示學生資訊區域
+                    } else {
+                        alert('無法獲取學生資料');
+                    }
+                };
+                xhr.send();
+            }
+
         // 等待 DOM 完全載入後再執行所有操作
         document.addEventListener('DOMContentLoaded', function() {
             // DOM 元素
@@ -248,6 +157,97 @@
             const courseForm = document.getElementById('courseForm');
             const modalTitle = document.getElementById('modalTitle');
             const cancelBtn = document.getElementById('cancelBtn');
+
+            // 添加新的日历相关元素
+            const weekDaysContainer = document.getElementById('weekDays');
+            const courseGrid = document.getElementById('courseGrid');
+            const prevWeekBtn = document.getElementById('prevWeekBtn');
+            const nextWeekBtn = document.getElementById('nextWeekBtn');
+            const currentMonthEl = document.getElementById('currentMonth');
+
+            let currentDate = new Date();
+
+            const calendarOperations = {
+                getWeekDates: () => {
+                    const dates = [];
+                    const firstDayOfWeek = new Date(currentDate);
+                    firstDayOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
+
+                    for (let i = 0; i < 7; i++) {
+                        const date = new Date(firstDayOfWeek);
+                        date.setDate(firstDayOfWeek.getDate() + i);
+                        dates.push(date);
+                    }
+                    return dates;
+                },
+
+                formatTime: (dateString) => {
+                    return new Date(dateString).toLocaleTimeString('zh-TW', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                    });
+                },
+
+                getCoursesForDate: (courses, date) => {
+                    return courses.filter(course => {
+                        const courseDate = new Date(course.start_time);
+                        return courseDate.toDateString() === date.toDateString();
+                    });
+                },
+
+                renderCalendar: async () => {
+                    const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+                    const dates = calendarOperations.getWeekDates();
+                    
+                    // 更新月份显示
+                    currentMonthEl.textContent = `${currentDate.getFullYear()}年${currentDate.getMonth() + 1}月`;
+
+                    // 渲染星期头部
+                    weekDaysContainer.innerHTML = dates.map((date, index) => `
+                        <div class="col">
+                            <div class="day-header ${date.toDateString() === new Date().toDateString() ? 'current-day' : ''}">
+                                <div>週${weekDays[index]}</div>
+                                <div class="fw-bold">${date.getDate()}</div>
+                            </div>
+                        </div>
+                    `).join('');
+
+                    // 获取课程数据
+                    const response = await courseOperations.getCourses();
+                    if (!response.success) return;
+
+                    // 渲染课程网格
+                    courseGrid.innerHTML = `
+                        <div class="row">
+                            ${dates.map(date => `
+                                <div class="col day-column">
+                                    ${calendarOperations.getCoursesForDate(response.data, date)
+                                        .map(course => `
+                                            <div class="course-card">
+                                                <div class="course-time">
+                                                    <i class="bi bi-clock"></i>
+                                                    ${calendarOperations.formatTime(course.start_time)}~
+                                                    ${calendarOperations.formatTime(course.end_time)}
+                                                </div>
+                                                <div class="course-name"> ${course.name}</div>
+                                                <div><i class="bi bi-person"></i> ${course.teacher_name}</div>
+                                                <div><i class="bi bi-people course-capacity"></i> ${course.current}/${course.capacity}</div>
+                                                <div class="mt-2">
+                                                    <button class="btn btn-sm btn-outline-primary" onclick="viewStudents(${course.id})">檢視</button>
+                                                    <button class="btn btn-sm btn-outline-secondary" onclick="handleEdit(${course.id})">編輯</button>
+                                                    <button class="btn btn-sm btn-outline-danger" onclick="handleDelete(${course.id})">刪除</button>
+                                                </div>
+                                            </div>
+                                        `).join('') || '<div class="no-courses">尚無課程</div>'
+                                    }
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+            };
+
 
             // 課程相關操作
             const courseOperations = {
@@ -348,6 +348,7 @@
                             <td>${course.capacity}</td>
                             <td>${course.current}/${course.capacity}</td>
                             <td>
+                                <button class="action-btn view-btn" onclick="viewStudents(${course.id})">檢視</button>
                                 <button class="action-btn edit-btn" onclick="handleEdit(${course.id})">編輯</button>
                                 <button class="action-btn delete-btn" onclick="handleDelete(${course.id})">刪除</button>
                             </td>
@@ -358,6 +359,13 @@
                 showModal: (isEdit = false) => {
                     modalTitle.textContent = isEdit ? '編輯課程' : '新增課程';
                     courseModal.style.display = 'block';
+
+                    const numClassesDiv = document.getElementById('num_classes_div');
+                    if (isEdit) {
+                        numClassesDiv.style.display = 'none'; // 隱藏
+                    } else {
+                        numClassesDiv.style.display = 'block'; // 顯示
+                    }
                 },
 
                 // 隱藏對話框
@@ -375,6 +383,7 @@
                     document.getElementById('startTime').value = course.start_time.slice(0, 16);
                     document.getElementById('endTime').value = course.end_time.slice(0, 16);
                     document.getElementById('capacity').value = course.capacity;
+                    document.getElementById('num_classes').value = course.num_classes;
                 }
             };
 
@@ -409,7 +418,8 @@
                     classroom: document.getElementById('classroom').value,
                     start_time: document.getElementById('startTime').value,
                     end_time: document.getElementById('endTime').value,
-                    capacity: document.getElementById('capacity').value
+                    capacity: document.getElementById('capacity').value,
+                    num_classes: document.getElementById('num_classes').value
                 };
 
                 if (courseId) {
@@ -443,6 +453,26 @@
                 }
             }
 
+            // 添加周切换事件监听器
+            prevWeekBtn.addEventListener('click', () => {
+                currentDate.setDate(currentDate.getDate() - 7);
+                calendarOperations.renderCalendar();
+            });
+
+            nextWeekBtn.addEventListener('click', () => {
+                currentDate.setDate(currentDate.getDate() + 7);
+                calendarOperations.renderCalendar();
+            });
+
+            // 修改刷新函数
+            async function refreshCourseList() {
+                await calendarOperations.renderCalendar();
+            }
+
+            // 初始化日历
+            refreshCourseList();
+
+
             // 事件監聽器
             addCourseBtn.addEventListener('click', () => uiOperations.showModal());
             cancelBtn.addEventListener('click', () => uiOperations.hideModal());
@@ -451,6 +481,7 @@
             // 初始化
             refreshCourseList();
         });
+
     </script>
 </body>
 </html>

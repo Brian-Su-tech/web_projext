@@ -57,10 +57,10 @@
                         <a class="nav-link" href="manage_instruments.php">樂器購買</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" href="dashboard.php">樂器訂單</a>
+                        <a class="nav-link active" href="manage_order.php">樂器訂單</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="manage_course.php">預約課程</a>
+                        <a class="nav-link" href="manage_course.php">課程管理</a>
                     </li>
                     <li class="nav-item">
                         <?php if ($user_logged_in): ?>
@@ -96,10 +96,38 @@
 
     <script>
         $(document).ready(function() {
-            // 獲取訂單列表
-            function fetchOrders() {
+            // 初始化訂單列表
+            fetchOrders();
+        });
+
+        // 刪除訂單的函式
+        function deleteOrder(orderId) {
+            if (confirm("確定刪除此訂單嗎？")) {
                 $.ajax({
-                    url: '../module/order_api.php?action=getOrders',
+                    url: '../module/manage_order_api.php?action=delete',
+                    type: 'POST',
+                    data: { id: orderId },
+                    success: function(response) {
+                        var data = JSON.parse(response);
+                        console.log("data.success:",data.success);
+                        if (data.success) {
+                            alert(data.message);
+                            fetchOrders();
+                        } else {
+                            alert(data.message);
+                        }
+                    },
+                    error: function() {
+                        alert('刪除訂單時發生錯誤');
+                    }
+                });
+            }
+        }
+
+        // 獲取訂單列表
+        function fetchOrders() {
+                $.ajax({
+                    url: '../module/manage_order_api.php?action=getOrders',
                     type: 'GET',
                     success: function(response) {
                         console.log("API 回應：", response); 
@@ -118,8 +146,7 @@
                             const orders = data.data;
                             const tbody = $('#ordersTable tbody');
                             tbody.empty();
-
-                            console.log("orders.length", orders.length); 
+ 
                             if (orders.length > 0) {
                                 orders.forEach(order => {
                                     console.log("插入訂單數據：", order);
@@ -150,35 +177,6 @@
                     }
                 });
             }
-
-            // 初始化訂單列表
-            fetchOrders();
-            
-        });
-
-        // 刪除訂單的函式
-        function deleteOrder(orderId) {
-            if (confirm("確定刪除此訂單嗎？")) {
-                console.log(orderId);
-                $.ajax({
-                    url: '../module/order_api.php?action=delete',
-                    type: 'POST',
-                    data: { id: orderId },
-                    success: function(response) {
-                        var data = JSON.parse(response);
-                        if (data.status === 'success') {
-                            alert(data.message);
-                            location.reload(); // 重新加載頁面
-                        } else {
-                            alert(data.message);
-                        }
-                    },
-                    error: function() {
-                        alert('刪除訂單時發生錯誤');
-                    }
-                });
-            }
-        }
     </script>
 </body>
 </html>

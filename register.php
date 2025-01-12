@@ -14,20 +14,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $stmt->execute([$email]);
     if ($stmt->fetch()) {
         $error = '這個電子郵件已經被註冊了！';
-    }
-    else {
+    } else {
         // 插入新用戶
         $stmt = $conn->prepare('INSERT INTO users (email, password, name, phone, role) VALUES (?, ?, ?, ?, ?)');
-        $stmt->execute([$email, $password, $name, $phone, $role]);
+        $stmt->bind_param('sssss', $email, $password, $name, $phone, $role); // 綁定變數，避免重複呼叫 execute()
 
         if ($stmt->execute()) {
-            $_SESSION['message'] = "註冊成功！請重新登入!";
-            header("Location: login.php");
+            echo "<script>
+                        alert('註冊成功！請重新登入!');
+                        window.location.href = 'login.php';  // 跳轉到登入頁面
+                    </script>";
             exit;  
         } else {
             $error = "註冊失敗：" . $conn->error;
         }
     }
+
+
+$stmt->close();
+$conn->close();
 }
 ?>
 

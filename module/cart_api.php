@@ -175,6 +175,8 @@ try {
                 $conn->commit();        
                 $_SESSION['cart'] = [];
                 echo json_encode(['success' => true, 'order_id' => $order_id]);
+                
+
             } catch (Exception $e) {
                 $conn->rollback();
                 throw $e;

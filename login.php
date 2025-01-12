@@ -29,9 +29,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                 // 根據角色重定向到不同的儀表板
                 if ($role === 'student') {
-                    header('Location: dashboard.php');
+                    header('Location: index.php');
                 } elseif ($role === 'admin') {
-                    header('Location: admin/dashboard.php');
+                    header('Location: admin/manage_order.php');
                 }
                 exit();
             }

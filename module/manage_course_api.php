@@ -44,25 +44,48 @@ try {
                 break;
             }
 
-            $sql = "INSERT INTO courses (name, teacher_name, classroom, start_time, end_time, capacity, current) VALUES (?, ?, ?, ?, ?, 0)";
+            $current = 0;
+            $start_time = new DateTime($data['start_time']);  // 將start_time轉為DateTime物件
+            $end_time = new DateTime($data['end_time']);      // 將end_time轉為DateTime物件
+            $num_classes = (int)$data['num_classes'];         // 要新增的堂數
+            
+            // 插入課程資料
+            $sql = "INSERT INTO courses (name, teacher_name, classroom, start_time, end_time, capacity, current) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            // 預處理 SQL
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("ssssi", 
-                $data['name'], 
-                $data['teacher_name'], 
-                $data['classroom'], 
-                $data['start_time'], 
-                $data['end_time'], 
-                $data['capacity']
-            );
+            if ($stmt === false) {
+                echo json_encode(['success' => false, 'message' => 'SQL 預處理失敗: ' . $conn->error]);
+                break;
+            }
 
-            if ($stmt->execute()) {
-                echo json_encode(['success' => true, 'message' => '課程新增成功', 'id' => $stmt->insert_id]);
-            } else {
-                echo json_encode(['success' => false, 'message' => '課程新增失敗: ' . $stmt->error]);
+            // 開始新增課程
+            for ($i = 0; $i < $num_classes; $i++) {
+                $new_start_time = $start_time->format('Y-m-d H:i:s'); // 格式化為MySQL支援的格式
+                $new_end_time = $end_time->format('Y-m-d H:i:s'); // 格式化為MySQL支援的格式
+                
+                $stmt->bind_param("ssssssi", 
+                    $data['name'], 
+                    $data['teacher_name'], 
+                    $data['classroom'], 
+                    $new_start_time, 
+                    $new_end_time, 
+                    $data['capacity'],
+                    $current
+                );
+
+                if ($stmt->execute()) {
+                    // 每次插入後將start_time和end_time推進一週
+                    $start_time->modify('+1 week');
+                    $end_time->modify('+1 week');
+                } else {
+                    echo json_encode(['success' => false, 'message' => '課程新增失敗: ' . $stmt->error]);
+                    break;
+                }
+        
             }
 
             $stmt->close();
-
+            echo json_encode(['success' => true, 'message' => '課程新增成功']);
             break;
 
         case 'updateCourse':
@@ -89,7 +112,7 @@ try {
                     WHERE id = ?";
             
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("ssssii",
+            $stmt->bind_param("sssssii",
                 $data['name'],
                 $data['teacher_name'],
                 $data['classroom'],

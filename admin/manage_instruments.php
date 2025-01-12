@@ -57,10 +57,10 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
                         <a class="nav-link" href="manage_instruments.php">樂器購買</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" href="dashboard.php">樂器訂單</a>
+                        <a class="nav-link active" href="manage_order.php">樂器訂單</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="manage_course.php">預約課程</a>
+                        <a class="nav-link" href="manage_course.php">課程管理</a>
                     </li>
                     <li class="nav-item">
                         <?php if ($user_logged_in): ?>

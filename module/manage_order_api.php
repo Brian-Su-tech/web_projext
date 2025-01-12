@@ -31,14 +31,14 @@ try {
                 }
             }
 
-            echo json_encode(['success' => true, 'data' => $courses]);
+            echo json_encode(['success' => true, 'data' => $courses, '$result->num_rows' => $result->num_rows]);
             break;
 
         case 'delete':
-            $data = json_decode(file_get_contents('php://input'), true);
+            // $data = json_decode(file_get_contents('php://input'), true);
 
             // 驗證必要欄位
-            if (!isset($data['id'])) {
+            if (!isset($_POST['id'])) {
                 echo json_encode([
                     'success' => false,
                     'message' => '缺少訂單ID'
@@ -47,9 +47,9 @@ try {
             }
            
             // 執行刪除
-            $sql = "DELETE FROM courses WHERE id = ?";
+            $sql = "DELETE FROM orders WHERE id = ?";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("i", $data['id']);
+            $stmt->bind_param("i", $_POST['id']);
             
             if ($stmt->execute()) {
                 echo json_encode([
@@ -64,7 +64,6 @@ try {
             }
             
             $stmt->close();
-            $checkStmt->close();
             break;
 
         default:

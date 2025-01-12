@@ -15,31 +15,13 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="styles/main.css">
-    <style>
-        .booking-form {
-            margin: 20px;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .day-container {
-            margin-bottom: 20px;
-        }
-        .day-title {
-            font-size: 1.5rem;
-            margin-bottom: 10px;
-            font-weight: bold;
-        }
-    </style>
+    <link rel="stylesheet" href="styles/booking.css">
 </head>
 <body>
     <!-- 導覽列 -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="index.html">和樂音樂教室</a>
+            <a class="navbar-brand" href="index.php">和樂音樂教室</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -72,28 +54,23 @@
     <div class="container my-5">
         <h2 class="text-center mb-4">預約課程</h2>
 
-        <div id="availableCourses" class="booking-form">
-            <!-- 可預約課程將由 JavaScript 動態載入並依照星期分類 -->
+        <!-- 新增日曆導航 -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <button id="prevWeekBtn" class="btn btn-outline-secondary">
+                <i class="bi bi-chevron-left"></i> 上一週
+            </button>
+            <h3 id="currentMonth" class="mb-0"></h3>
+            <button id="nextWeekBtn" class="btn btn-outline-secondary">
+                下一週 <i class="bi bi-chevron-right"></i>
+            </button>
         </div>
 
-        <!-- 修改 Modal 用於顯示課程詳情 -->
-        <div class="modal fade" id="courseModal" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">課程詳情</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <!-- 課程詳情將由 JavaScript 填充 -->
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
-                        <button type="button" class="btn btn-primary" id="bookCourse">預約課程</button>
-                    </div>
-                </div>
-            </div>
+        <!-- 日曆視圖容器 -->
+        <div class="calendar-grid">
+            <div class="row" id="weekDays"></div>
+            <div class="row" id="courseGrid"></div>
         </div>
+
     </div>
 
     <!-- Bootstrap JS -->
@@ -103,49 +80,117 @@
 
     <script>
         $(document).ready(function() {
-            // 載入可預約課程
-            function loadAvailableCourses() {
-                $.get('booking_api.php?action=get_available_courses', function(data) {
-                    const daysOfWeek = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"];
-                    let coursesByDay = {};
+            let currentDate = new Date();
 
-                    // 將課程分類到對應的星期
-                    data.forEach(function(course) {
-                        const dayOfWeek = daysOfWeek[new Date(course.start_time).getDay() - 1];
-                        if (!coursesByDay[dayOfWeek]) {
-                            coursesByDay[dayOfWeek] = [];
-                        }
-                        coursesByDay[dayOfWeek].push(course);
-                    });
+            // 獲取一週的日期
+            function getWeekDates() {
+                const dates = [];
+                const firstDayOfWeek = new Date(currentDate);
+                firstDayOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
 
-                    // 動態生成課程列表
-                    let html = '';
-                    daysOfWeek.forEach(function(day) {
-                        if (coursesByDay[day]) {
-                            html += `
-                                <div class="day-container">
-                                    <div class="day-title">${day}</div>
-                                    ${coursesByDay[day].map(course => `
-                                        <div class="course-info">
-                                            <h5>${course.name}</h5>
-                                            <p>
-                                                教師: ${course.teacher}<br>
-                                                教室: ${course.classroom}<br>
-                                                時間: ${formatDateTime(course.start_time)} - ${formatDateTime(course.end_time)}<br>
-                                                剩餘名額: ${course.remaining}/${course.capacity}
-                                            </p>
-                                            <button class="btn btn-primary book-btn" data-course-id="${course.id}">
-                                                預約課程
-                                            </button>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            `;
-                        }
-                    });
-                    $('#availableCourses').html(html);
+                for (let i = 0; i < 7; i++) {
+                    const date = new Date(firstDayOfWeek);
+                    date.setDate(firstDayOfWeek.getDate() + i);
+                    dates.push(date);
+                }
+                return dates;
+            }
+
+            // 格式化時間
+            function formatTime(datetime) {
+                return new Date(datetime).toLocaleTimeString('zh-TW', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
                 });
             }
+            // 格式化日期
+            function formatDate(date) {
+                return date.toLocaleDateString('zh-TW', {
+                    month: 'numeric',
+                    day: 'numeric'
+                });
+            }
+
+            // 取得當天課程
+            function getCoursesForDate(courses, date) {
+                return courses.filter(course => {
+                    const courseDate = new Date(course.start_time);
+                    return courseDate.toDateString() === date.toDateString();
+                });
+            }
+
+            // 渲染日曆
+            function renderCalendar(courses) {
+                const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+                const dates = getWeekDates();
+                
+                // 更新月份顯示
+                $('#currentMonth').text(
+                    `${currentDate.getFullYear()}年${currentDate.getMonth() + 1}月`
+                );
+
+                // 渲染星期標題
+                let weekDaysHtml = dates.map((date, index) => `
+                    <div class="col">
+                        <div class="day-header ${date.toDateString() === new Date().toDateString() ? 'current-day' : ''}">
+                            <div>週${weekDays[index]}</div>
+                            <div class="fw-bold">${formatDate(date)}</div>
+                        </div>
+                    </div>
+                `).join('');
+                $('#weekDays').html(weekDaysHtml);
+
+                // 渲染課程網格
+                let courseGridHtml = dates.map(date => `
+                    <div class="col day-column">
+                        ${getCoursesForDate(courses, date).map(course => `
+                            <div class="course-card">
+                                <div class="course-time">
+                                    <i class="bi bi-clock"></i> 
+                                    ${formatTime(course.start_time)} - ${formatTime(course.end_time)}
+                                </div>
+                                <div class="course-name">${course.name}</div>
+                                <div class="course-info">
+                                    <div><i class="bi bi-person"></i> ${course.teacher_name}</div>
+                                    <div><i class="bi bi-geo-alt"></i> ${course.classroom}</div>
+                                    <div><i class="bi bi-people"></i> ${course.current}/${course.capacity}</div>
+                                </div>
+                                <div class="mt-2">
+                                    ${course.is_booked 
+                                        ? `<button class="btn btn-danger btn-sm cancel-btn" data-course-id="${course.id}">取消預約</button>`
+                                        : `<button class="btn btn-primary btn-sm book-btn" data-course-id="${course.id}">預約課程</button>`
+                                    }
+                                </div>
+                            </div>
+                        `).join('') || '<div class="no-courses">尚無課程</div>'}
+                    </div>
+                `).join('');
+                $('#courseGrid').html(courseGridHtml);
+            }
+
+            // 載入可預約課程
+            function loadAvailableCourses() {
+                $.get('module/booking_api.php?action=get_available_courses', function(data) {
+                    if (!Array.isArray(data)) {
+                        toastr.error('後端數據格式錯誤');
+                        return;
+                    }
+                    renderCalendar(data);
+                }).fail(function() {
+                    toastr.error('無法載入課程數據，請稍後再試。');
+                });
+            }
+
+            // 綁定週次切換按鈕事件
+            $('#prevWeekBtn').click(function() {
+                currentDate.setDate(currentDate.getDate() - 7);
+                loadAvailableCourses();
+            });
+            $('#nextWeekBtn').click(function() {
+                currentDate.setDate(currentDate.getDate() + 7);
+                loadAvailableCourses();
+            });
 
             // 格式化日期時間
             function formatDateTime(datetime) {
@@ -159,36 +204,38 @@
                 });
             }
 
-            // 顯示課程詳情
-            function showCourseDetail(courseId) {
-                $.get(`booking_api.php?action=get_course&id=${courseId}`, function(course) {
-                    let modal = $('#courseModal');
-                    modal.find('.modal-title').text(course.name);
-                    modal.find('.modal-body').html(`
-                        <p>教室: ${course.classroom}</p>
-                        <p>教師: ${course.teacher}</p>
-                        <p>開始時間: ${formatDateTime(course.start_time)}</p>
-                        <p>結束時間: ${formatDateTime(course.end_time)}</p>
-                        <p>剩餘名額: ${course.remaining}/${course.capacity}</p>
-                    `);
-                    modal.find('#bookCourse').data('course-id', course.id);
-                    modal.modal('show');
-                });
-            }
-
             // 預約課程
             function bookCourse(courseId) {
                 $.ajax({
-                    url: 'booking_api.php?action=book',
+                    url: 'module/booking_api.php?action=book',
                     type: 'POST',
                     data: { course_id: courseId },
+                    dataType: 'json',
                     success: function(response) {
                         if (response.success) {
-                            toastr.success('預約成功！');
+                            alert('預約成功！');
                             $('#courseModal').modal('hide');
                             loadAvailableCourses();
                         } else {
-                            toastr.error('預約失敗：' + response.message);
+                            alert('預約失敗：' + response.message);
+                        }
+                    }
+                });
+            }
+
+            // 取消預約課程
+            function cancelReservation(courseId) {
+                $.ajax({
+                    url: 'module/booking_api.php?action=cancel',
+                    type: 'POST',
+                    data: { course_id: courseId },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            alert('已取消預約！');
+                            loadAvailableCourses();
+                        } else {
+                            alert('取消預約失敗：' + response.message);
                         }
                     }
                 });
@@ -196,14 +243,21 @@
 
             // 綁定預約按鈕事件
             $(document).on('click', '.book-btn', function() {
-                let courseId = $(this).data('course-id');
-                showCourseDetail(courseId);
+                // 檢查是否登入
+                <?php if (!$user_logged_in): ?>
+                    alert('請先登入才能預約課程！');
+                    return;
+                <?php else: ?>
+                    let courseId = $(this).data('course-id');
+                    console.log('課程ID:', courseId); // 測試用
+                    bookCourse(courseId);
+                <?php endif; ?>
             });
 
-            // 表單提交處理
-            $('#bookCourse').click(function() {
+            // 綁定取消預約按鈕事件
+            $(document).on('click', '.cancel-btn', function() {
                 let courseId = $(this).data('course-id');
-                bookCourse(courseId);
+                cancelReservation(courseId);
             });
 
             // 初始載入可預約課程
